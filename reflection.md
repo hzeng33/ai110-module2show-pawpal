@@ -2,10 +2,25 @@
 
 ## 1. System Design
 
+- The user is able to add user and the pet's information.
+- The user is able to add and edit the task, which include duration and priority.
+- The user is able to generate daily schedule based on the constraints and priorities.
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+
+My initial UML design has four main classes: Owner, Pet, Task, and Scheduler. I also added two small helper classes, Placement and Schedule, to hold the scheduler output.
+
+- Owner: stores the user's information and their free time budget for the day. It holds a list of pets and manages adding and editing them.
+- Pet: stores one animal's information and holds a list of tasks. It manages adding, editing, and getting those tasks.
+- Task: stores one care activity, including its duration and priority. It can update its own fields.
+- Scheduler: it is the engine. It reads the owner's tasks and available time, then sorts the tasks by priority and packs them into the free window back to back.
+- Placement: wraps one task with a start time and end time.
+- Schedule: holds the result, split into scheduled tasks and inapplicable tasks that did not fit the available time.
+
+The main idea is that Owner holds Pets, each Pet holds Tasks, and the Scheduler reasons about the tasks across time so the other classes stay simple.
 
 **b. Design changes**
 

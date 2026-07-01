@@ -44,33 +44,22 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-# A sample of the app's CLI:
+### A sample of the app's CLI:
 
 Running `python main.py` produces the following schedule in the terminal:
 
 ```
-==============================================
-          Today's Schedule for Alex
-==============================================
-07:30 Milo Feed [ ]
-08:00 Rex Morning walk [ ]
-14:00 Milo Vet visit [ ]
-18:00 Rex Evening walk [ ]
-==============================================
+Today's Schedule for Alex
+
+Daily plan for Rex (dog):
+  08:00 — Morning walk (30 min) [priority: high]
+  18:00 — Evening walk (30 min) [priority: medium]
+
+Daily plan for Milo (cat):
+  07:30 — Feed (10 min) [priority: high]
+  14:00 — Vet visit (60 min) [priority: high]
 
 ```
-
-# e.g.:
-
-# Daily plan for Biscuit (Golden Retriever):
-
-# 08:00 — Morning walk (30 min) [priority: high]
-
-# 09:00 — Feeding (10 min) [priority: high]
-
-# ...
-
-````
 
 ## 🧪 Testing PawPal+
 
@@ -80,7 +69,7 @@ pytest
 
 # Run with coverage:
 pytest --cov
-````
+```
 
 Sample test output:
 

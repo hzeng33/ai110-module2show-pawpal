@@ -16,6 +16,8 @@ class Task:
 
     description: str
     time: time                  # when the task should happen
+    duration: int = 30          # how long it takes, in minutes      
+    priority: str = "medium"    # "low", "medium", or "high"    
     frequency: str = "daily"    # how often, e.g. "daily", "weekly", "once"
     completed: bool = False     # completion status
 

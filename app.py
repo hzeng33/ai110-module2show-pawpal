@@ -110,7 +110,7 @@ st.caption("This button should call your scheduling logic once you implement it.
 
 if st.button("Generate schedule"):
     scheduler = Scheduler(st.session_state.owner)
-    ordered_tasks = scheduler.organize_by_time()
+    ordered_tasks = scheduler.sort_by_time()
 
     if ordered_tasks:
         st.table(

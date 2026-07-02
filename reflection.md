@@ -33,13 +33,15 @@ The main idea is that Owner holds Pets, each Pet holds Tasks, and the Scheduler 
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+My scheduler mainly reasons about three things: when a task happens, how long it takes, and how often it repeats. Time is the primary constraint because a daily plan only makes sense in order, and everything else is built on that chronological view. Duration matters second because it lets `find_conflicts` see whether two tasks actually overlap instead of only catching clashes at the exact same minute. Frequency drives `expand_recurring` so one stored task can populate a whole week without being copied. Priority is stored on each task but the algorithms do not sort or drop tasks based on it, because a pet owner already knows which tasks matter and I did not want the app to quietly reorder their day for them.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+One tradeoff my scheduler makes is how it handles recurring tasks. Instead of storing a separate Task object for every date a pet needs walking or feeding, the scheduler only stores one Task per activity. The view that spans several days is built on the fly by the `expand_recurring` method, which walks through a date window and emits the same task once for each day it applies to.
+
+The upside is that the data stays small and easy to change. A pet owner with ten daily habits does not end up with hundreds of records after a week, and editing the description or duration of a task updates every future occurrence in one place. That also matches how a pet owner actually thinks about their routine. They do not plan each Monday's morning walk as a fresh event. It is just "the morning walk."
+
+The downside is that the scheduler cannot mark one specific future day as done without producing a new task. My `mark_complete` method works around this by spawning a copy with a bumped due date whenever a daily or weekly task is finished, but that means the same activity can show up in `expand_recurring` twice on the same day if both paths are used together. I decided this is fine for a single owner planning a week at a time. If this were a shared household calendar tracking dozens of animals across months of history, I would probably store dated instances directly and drop the expansion method.
 
 ---
 

@@ -79,14 +79,16 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ adds four algorithmic layers on top of the basic Owner/Pet/Task model. Each one is implemented as a method on the `Scheduler` class in `pawpal_system.py`, plus one small extension to `Task.mark_complete` that auto-reschedules recurring tasks.
 
-| Feature           | Method(s) | Notes                             |
-| ----------------- | --------- | --------------------------------- |
-| Task sorting      |           | e.g., by priority, duration       |
-| Filtering         |           | e.g., skip tasks if time runs out |
-| Conflict handling |           | e.g., overlapping time slots      |
-| Recurring tasks   |           | e.g., daily vs. weekly            |
+| Feature | Method(s) | Notes |
+| ------- | --------- | ----- |
+| Sorting by time | `Scheduler.sort_by_time()` | Sorts every task across all pets in chronological order using a lambda key on `task.time`. |
+| Filtering by pet or status | `Scheduler.filter_tasks(pet_name=None, completed=None)` | Filters by pet name, completion status, or both. No arguments returns everything. |
+| Conflict detection | `Scheduler.find_conflicts()` | Detects overlapping time windows and distinguishes same-pet clashes from owner double-bookings. Returns warning strings; never raises. |
+| Recurring tasks | `Scheduler.expand_recurring(start_date, horizon_days)` + `Task.mark_complete()` | `expand_recurring` emits `(date, task)` pairs across a date window based on frequency (`daily`, `weekly`, `once`). `mark_complete` auto-adds the next instance via `timedelta` when a recurring task finishes. |
+
+Run `python main.py` to see all four features exercised against a demo owner with two pets.
 
 ## 📸 Demo Walkthrough
 

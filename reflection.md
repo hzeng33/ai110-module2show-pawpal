@@ -49,13 +49,29 @@ The downside is that the scheduler cannot mark one specific future day as done w
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used AI across the whole project, but in different ways for each phase. Early on it helped me brainstorm the class design and turn my UML into clean Python stubs, and later I leaned on it more for wiring the scheduler logic into the Streamlit UI and refactoring the README. The prompts that worked best were specific and file-based, like "here is my final `pawpal_system.py`, update the UML to match" or "Please help fix the issues you flagged earilier in `pawpal_system.py`."
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+One moment I did not accept a suggestion as-is was the conflict warnings. The assistant first put every conflict into one plain warning box, but I had it split them by severity so a same-pet clash shows as a red error and an owner double-booking shows as a yellow warning, because those mean different things to a pet owner. To verify what the AI wrote, I ran `main.py` and the test suite instead of trusting the code by reading it, which caught cases like conflicts still being computed on the full schedule even when the view was filtered.
+
+**c. AI Strategy**
+
+- **Which AI features were most effective for building your scheduler?**
+
+The most effective feature was letting the assistant read my actual files before it suggested anything, so its edits matched my real class names and methods instead of a generic template. Inline edits directly in `app.py` and `pawpal_system.py` were faster than copying snippets back and forth, and having it run `main.py` to capture real output kept my README honest.
+
+- **Give one example of an AI suggestion you rejected or modified.**
+
+My initial UML had two extra helper classes, `Placement` and `Schedule`, to hold scheduler output, and AI was willing to build them out. I dropped them and kept the scheduler returning plain lists of tasks, because the helper classes added structure I never actually needed and made the design harder to follow.
+
+- **How did separate chat sessions per phase help you stay organized?**
+
+Using a fresh session for each phase kept each conversation focused on one goal, so the design chat did not get tangled up with debugging or documentation. It also made it easy to go back and find where a decision was made, since each phase had its own clean history.
+
+- **What did you learn about being the "lead architect"?**
+
+I learned that the AI is very fast at producing code but it does not own the design, so it will happily build whatever I ask for even if it makes the system messier. My job was to hold the vision, reject suggestions that did not fit, and verify the output by running it rather than assuming it was correct. The best results came when I made the decisions and used AI to execute them quickly, not when I let it decide the structure for me.
 
 ---
 
@@ -69,6 +85,7 @@ The downside is that the scheduler cannot mark one specific future day as done w
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
+  If among levels from 1-5, I would give a 4.
 - What edge cases would you test next if you had more time?
 
 ---
@@ -79,10 +96,16 @@ The downside is that the scheduler cannot mark one specific future day as done w
 
 - What part of this project are you most satisfied with?
 
+I am most satisfied with how the AI helped me brainstorm the UML design and implement the sorting and filtering logic for the app.
+
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+I am happy with how the project turned out, so I would keep it mostly as the current version.
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+For designing systems, I learned that it is important to understand the relationships between the objects. For working with AI, I learned that I should run every piece of code the AI generates to verify it, and then give follow-up prompts to ask for corrections when something is wrong.

@@ -22,6 +22,25 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## ✨ Features
+
+PawPal+ layers real scheduling algorithms on top of a simple `Owner → Pet → Task` model:
+
+- **Time-ordered planning** — `Scheduler.sort_by_time()` merges tasks from every pet and orders them by due date, then clock time, so the whole household's day reads top-to-bottom.
+- **Filtering by pet and status** — `Scheduler.filter_tasks()` narrows the view to a single pet, to pending vs. completed tasks, or any combination.
+- **Conflict warnings with severity** — `Scheduler.find_conflicts()` detects overlapping time windows and classifies them: a **same-pet** overlap is a hard conflict (one pet can't be in two places), while a **cross-pet** overlap is an owner double-booking.
+- **Recurring tasks** — `Scheduler.expand_recurring()` projects `daily`, `weekly`, and `once` tasks across a date horizon, and `Task.mark_complete()` auto-enqueues the next occurrence when a recurring task is finished.
+- **Interactive Streamlit UI** — add an owner, pets, and tasks; filter the plan; and generate a schedule with color-coded conflict callouts (🔴 impossible for one pet, 🟡 you're double-booked, ✅ all clear).
+
+## 🏗️ System Architecture
+
+The final class model — `Owner` composes `Pet`s, each `Pet` composes its `Task`s (with a
+back-reference), and the `Scheduler` plans over one `Owner`'s full task set:
+
+![PawPal+ UML class diagram](diagrams/uml_final.png)
+
+The Mermaid source lives at [`diagrams/uml_final.mmd`](diagrams/uml_final.mmd).
+
 ## Getting started
 
 ### Setup
@@ -46,19 +65,18 @@ pip install -r requirements.txt
 
 ### A sample of the app's CLI:
 
-Running `python main.py` produces the following schedule in the terminal:
+Running `python main.py` merges both pets' tasks into one time-ordered plan (a fuller
+run, including conflicts and recurrence, is in the [Demo Walkthrough](#-demo-walkthrough) below):
 
 ```
-Today's Schedule for Alex
-
-Daily plan for Rex (dog):
-  08:00 — Morning walk (30 min) [priority: high]
-  18:00 — Evening walk (30 min) [priority: medium]
-
-Daily plan for Milo (cat):
+All tasks for Alex, sorted by time:
   07:30 — Feed (10 min) [priority: high]
-  14:00 — Vet visit (60 min) [priority: high]
-
+  08:00 — Morning walk (30 min) [priority: high]
+  08:15 — Fetch training (20 min) [priority: medium]
+  12:30 — Midday brush (15 min) [priority: low]
+  14:00 — Vet visit (60 min) [priority: high] (done)
+  14:30 — Grooming (45 min) [priority: medium]
+  18:00 — Evening walk (30 min) [priority: medium]
 ```
 
 ## 🧪 Testing PawPal+
@@ -105,12 +123,74 @@ Run `python main.py` to see all four features exercised against a demo owner wit
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### What the UI lets you do
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+The Streamlit app (`streamlit run app.py`) has three working areas:
 
-**Screenshot or video** _(optional)_: <!-- Insert a screenshot or link to a demo video here -->
+- **Owner & pet setup** — enter an owner name, then add one or more pets (name + species).
+- **Task entry** — for a chosen pet, pick a task from a list of common care activities (or choose **Custom…** to type your own), then set time, duration, and priority. Added tasks appear immediately in a per-pet table.
+- **Build Schedule** — filter by pet (or "All pets") and by status (All / Pending / Completed), then generate a single time-ordered plan with conflict warnings. Each row has an interactive **Done** checkbox: ticking it marks that task complete on the pet and persists across the session.
+
+### Example workflow
+
+1. Set the owner to **Jordan** and add a pet, **Mochi** (dog).
+2. Add a task: *Morning walk*, 08:00, 20 min, high priority.
+3. Add a second task: *Vet visit*, 08:10, 30 min, high priority — deliberately overlapping.
+4. Under **Build Schedule**, leave the filters on "All pets" / "All" and click **Generate schedule**.
+5. PawPal+ shows the two tasks ordered by time **and** a 🔴 warning that Mochi is booked twice at once — because one pet can't do both. Remove or move one task and the warning turns into a ✅ "clear to go" banner.
+
+### Key Scheduler behaviors on display
+
+- **Sorting** — tasks entered out of order (evening before morning) are reordered earliest-first via `sort_by_time()`.
+- **Filtering** — choosing a single pet or "Pending" only re-runs `filter_tasks()` before sorting.
+- **Conflict warnings** — same-pet overlaps render as `st.error` (🔴 impossible), cross-pet overlaps as `st.warning` (🟡 double-booked), and a clean plan as `st.success` (✅).
+- **Recurrence** — completing a `daily`/`weekly` task auto-schedules its next occurrence via `Task.mark_complete()`.
+
+### Sample CLI output
+
+The same logic runs headless. `python main.py` builds a demo owner (**Alex**) with two pets and exercises every Scheduler feature:
+
+```
+All tasks for Alex, sorted by time:
+  07:30 — Feed (10 min) [priority: high]
+  08:00 — Morning walk (30 min) [priority: high]
+  08:15 — Fetch training (20 min) [priority: medium]
+  12:30 — Midday brush (15 min) [priority: low]
+  14:00 — Vet visit (60 min) [priority: high] (done)
+  14:30 — Grooming (45 min) [priority: medium]
+  18:00 — Evening walk (30 min) [priority: medium]
+
+Only Rex's tasks:
+  18:00 — Evening walk (30 min) [priority: medium]
+  08:00 — Morning walk (30 min) [priority: high]
+  12:30 — Midday brush (15 min) [priority: low]
+  14:30 — Grooming (45 min) [priority: medium]
+  08:15 — Fetch training (20 min) [priority: medium]
+
+Pending tasks only:
+  18:00 — Evening walk (30 min) [priority: medium]
+  08:00 — Morning walk (30 min) [priority: high]
+  12:30 — Midday brush (15 min) [priority: low]
+  14:30 — Grooming (45 min) [priority: medium]
+  08:15 — Fetch training (20 min) [priority: medium]
+  07:30 — Feed (10 min) [priority: high]
+
+3-day plan starting today:
+  2026-07-04 18:00 — Evening walk (daily)
+  2026-07-04 08:00 — Morning walk (daily)
+  ... (daily tasks repeat for 2026-07-05 and 2026-07-06) ...
+  2026-07-04 14:00 — Vet visit (once)
+
+Scheduling conflicts:
+  WARNING: Rex has overlapping tasks — Morning walk at 08:00 and Fetch training at 08:15.
+  WARNING: owner double-booked — Milo's Vet visit at 14:00 overlaps with Rex's Grooming at 14:30.
+
+Rex's tasks after completing Morning walk (new instance should appear for tomorrow):
+  2026-07-04 08:00 — Morning walk [done]
+  ... (Rex's other tasks unchanged) ...
+  2026-07-05 08:00 — Morning walk [pending]
+```
+
+> The two `WARNING` lines show both conflict types: a **same-pet** clash (Rex booked twice)
+> and a **cross-pet** owner double-booking (Milo's vet visit vs. Rex's grooming). The final
+> block shows recurrence — completing the 08:00 walk auto-creates tomorrow's instance.

@@ -1,0 +1,51 @@
+%% PawPal+ — Final System Architecture (UML class diagram)
+%% Reflects the final implementation in pawpal_system.py.
+%% Render at https://mermaid.live or with the Mermaid CLI.
+classDiagram
+    direction LR
+
+    class Task {
+        +str description
+        +time time
+        +int duration = 30
+        +str priority = "medium"
+        +str frequency = "daily"
+        +bool completed = False
+        +date due_date
+        +Pet pet
+        +mark_complete() None
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +list~Task~ tasks
+        +add_task(task Task) None
+        +get_tasks() list~Task~
+    }
+
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet Pet) None
+        +get_all_tasks() list~Task~
+    }
+
+    class Scheduler {
+        +Owner owner
+        +get_all_tasks() list~Task~
+        +sort_by_time() list~Task~
+        +filter_tasks(pet_name, completed) list~Task~
+        +expand_recurring(start_date, horizon_days) list
+        +find_conflicts() list~str~
+    }
+
+    %% Owner composes Pets; a Pet composes its Tasks.
+    Owner "1" *-- "0..*" Pet : keeps
+    Pet "1" *-- "0..*" Task : schedules
+
+    %% Task holds a back-reference to its Pet (set in Pet.add_task).
+    Task "0..*" --> "1" Pet : belongs to
+
+    %% Scheduler operates over one Owner's full task set.
+    Scheduler "1" --> "1" Owner : plans for

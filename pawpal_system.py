@@ -30,7 +30,13 @@ class Task:
         The new instance is appended to the same pet's task list via the pet
         backreference set by Pet.add_task, so no external caller has to know
         the task got rescheduled.
+
+        Completing an already-completed task is a no-op: it never spawns a
+        second future instance, so callers can safely re-invoke this.
         """
+        if self.completed:
+            return  # already done — don't reschedule a duplicate
+
         self.completed = True
 
         if self.frequency == "daily":
@@ -97,8 +103,15 @@ class Scheduler:
         return self.owner.get_all_tasks()
 
     def sort_by_time(self) -> list[Task]:
-        """Return all tasks ordered by their scheduled time (earliest first)."""
-        return sorted(self.owner.get_all_tasks(), key=lambda t: t.time)
+        """Return all tasks ordered by due date, then scheduled time (earliest first).
+
+        Sorting on ``due_date`` before ``time`` keeps tasks in true calendar
+        order, so a task due tomorrow at 06:00 comes after one due today at
+        18:00 rather than being reordered by clock time alone.
+        """
+        return sorted(
+            self.owner.get_all_tasks(), key=lambda t: (t.due_date, t.time)
+        )
 
     def filter_tasks(
         self,
@@ -128,17 +141,24 @@ class Scheduler:
         daily  → every day in the window
         weekly → same weekday as start_date only
         once   → only on start_date
+
+        Each emitted occurrence is an independent copy dated to its day, so
+        mutating one day's task (e.g. marking it complete) never affects the
+        others or the original stored task.
         """
         results: list[tuple[date, Task]] = []
         for offset in range(horizon_days):
             day = start_date + timedelta(days=offset)
             for task in self.owner.get_all_tasks():
                 if task.frequency == "daily":
-                    results.append((day, task))
+                    pass
                 elif task.frequency == "weekly" and day.weekday() == start_date.weekday():
-                    results.append((day, task))
+                    pass
                 elif task.frequency == "once" and day == start_date:
-                    results.append((day, task))
+                    pass
+                else:
+                    continue
+                results.append((day, replace(task, due_date=day)))
         return results
 
     def find_conflicts(self) -> list[str]:
@@ -147,6 +167,9 @@ class Scheduler:
         Compares every pair of tasks in start-time order and checks whether
         one starts before the other ends. Duration is treated as minutes,
         so start times are converted to minutes-since-midnight for the check.
+
+        Only tasks that fall on the same due_date are compared, so recurring
+        tasks scheduled for different days never register as conflicts.
 
         Same-pet overlap  → hard conflict (one pet cannot do two things at once).
         Cross-pet overlap → soft conflict (the owner is double-booked).
@@ -159,6 +182,9 @@ class Scheduler:
         for i, a in enumerate(tasks):
             a_end = a.time.hour * 60 + a.time.minute + a.duration
             for b in tasks[i + 1:]:
+                if b.due_date != a.due_date:
+                    break  # sorted by (due_date, time): no later task shares a's day
+
                 b_start = b.time.hour * 60 + b.time.minute
                 if b_start >= a_end:
                     continue

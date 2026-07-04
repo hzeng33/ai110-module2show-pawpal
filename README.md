@@ -63,30 +63,43 @@ Daily plan for Milo (cat):
 
 ## 🧪 Testing PawPal+
 
+Run the full test suite from the project root:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+The tests live in `tests/test_pawpal.py` and cover the core scheduling behaviors:
+
+- **Task completion** — `mark_complete()` flips a task's `completed` status, and re-completing an already-done task is a no-op (no duplicate reschedule).
+- **Sorting correctness** — `sort_by_time()` orders tasks by due date then time (so tomorrow at 06:00 sorts after today at 18:00), is stable for identical times, and returns an empty list when there are no tasks.
+- **Recurrence logic** — completing a `daily` task spawns a new instance due the next day, `weekly` advances by seven days, and `once` never reschedules; `expand_recurring()` emits independent per-day copies that don't alias each other.
+- **Conflict detection** — `find_conflicts()` flags overlapping time windows, ignores back-to-back tasks and tasks on different days, and distinguishes same-pet clashes from cross-pet owner double-bookings.
+- **Filtering behavior** — `filter_tasks()` filters by pet name, by completion status (including the `completed=False` case), and returns an empty list for an unknown pet.
+
+Terminal output of a successful test run:
 
 ```
-# Paste your pytest output here
+============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\ai110-module2show-pawpal
+collected 18 items
+
+tests\test_pawpal.py ..................                                  [100%]
+
+============================= 18 passed in 0.02s ==============================
 ```
 
 ## 📐 Smarter Scheduling
 
 PawPal+ adds four algorithmic layers on top of the basic Owner/Pet/Task model. Each one is implemented as a method on the `Scheduler` class in `pawpal_system.py`, plus one small extension to `Task.mark_complete` that auto-reschedules recurring tasks.
 
-| Feature | Method(s) | Notes |
-| ------- | --------- | ----- |
-| Sorting by time | `Scheduler.sort_by_time()` | Sorts every task across all pets in chronological order using a lambda key on `task.time`. |
-| Filtering by pet or status | `Scheduler.filter_tasks(pet_name=None, completed=None)` | Filters by pet name, completion status, or both. No arguments returns everything. |
-| Conflict detection | `Scheduler.find_conflicts()` | Detects overlapping time windows and distinguishes same-pet clashes from owner double-bookings. Returns warning strings; never raises. |
-| Recurring tasks | `Scheduler.expand_recurring(start_date, horizon_days)` + `Task.mark_complete()` | `expand_recurring` emits `(date, task)` pairs across a date window based on frequency (`daily`, `weekly`, `once`). `mark_complete` auto-adds the next instance via `timedelta` when a recurring task finishes. |
+| Feature                    | Method(s)                                                                       | Notes                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sorting by time            | `Scheduler.sort_by_time()`                                                      | Sorts every task across all pets in chronological order using a lambda key on `task.time`.                                                                                                                     |
+| Filtering by pet or status | `Scheduler.filter_tasks(pet_name=None, completed=None)`                         | Filters by pet name, completion status, or both. No arguments returns everything.                                                                                                                              |
+| Conflict detection         | `Scheduler.find_conflicts()`                                                    | Detects overlapping time windows and distinguishes same-pet clashes from owner double-bookings. Returns warning strings; never raises.                                                                         |
+| Recurring tasks            | `Scheduler.expand_recurring(start_date, horizon_days)` + `Task.mark_complete()` | `expand_recurring` emits `(date, task)` pairs across a date window based on frequency (`daily`, `weekly`, `once`). `mark_complete` auto-adds the next instance via `timedelta` when a recurring task finishes. |
 
 Run `python main.py` to see all four features exercised against a demo owner with two pets.
 
